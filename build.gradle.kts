@@ -1,8 +1,4 @@
-import org.gradle.internal.extensions.stdlib.toDefaultLowerCase
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.URI
-import java.net.URL
 
 plugins {
 	id("maven-publish")
