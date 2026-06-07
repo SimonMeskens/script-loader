@@ -1,6 +1,6 @@
 package io.github.simonmeskens.scriptloader.events.init;
 
-import io.github.simonmeskens.scriptloader.GroovyLoader;
+import io.github.simonmeskens.scriptloader.GroovyScriptLoader;
 import net.mine_diver.unsafeevents.listener.EventListener;
 import net.modificationstation.stationapi.api.event.init.InitFinishedEvent;
 import net.modificationstation.stationapi.api.event.mod.InitEvent;
@@ -15,11 +15,11 @@ public class InitListener {
 
     @EventListener
     private static void serverInit(InitEvent event) {
-        GroovyLoader.runDirectory("init");
+        GroovyScriptLoader.runDirectory("init");
     }
 
     @EventListener
     private static void serverInitFinished(InitFinishedEvent event) {
-        GroovyLoader.runDirectory("finished");
+        GroovyScriptLoader.runDirectory("finished");
     }
 }

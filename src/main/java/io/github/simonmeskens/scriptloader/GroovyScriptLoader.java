@@ -5,6 +5,7 @@ import groovy.lang.GroovyShell;
 import net.fabricmc.loader.api.FabricLoader;
 import net.modificationstation.stationapi.api.util.Namespace;
 import org.apache.logging.log4j.Logger;
+import org.codehaus.groovy.control.CompilerConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,12 +13,25 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class GroovyLoader {
+public class GroovyScriptLoader {
     @SuppressWarnings("UnstableApiUsage")
     public static final Logger logger = Namespace.resolve().getLogger("GroovyLoader");
 
-    public static final Binding binding = new Binding();
-    public static final GroovyShell shell = new GroovyShell(GroovyLoader.class.getClassLoader(), binding);
+    public static final Binding binding;
+    public static final GroovyShell shell;
+
+    static {
+        CompilerConfiguration config = new CompilerConfiguration();
+        config.addCompilationCustomizers(
+                new StaticCompilationCustomizer(),
+                new RemappingCompilationCustomizer()
+        );
+
+        ClassLoader loader = GroovyScriptLoader.class.getClassLoader();
+
+        binding = new Binding();
+        shell = new GroovyShell(loader, binding, config);
+    }
 
     public static void runDirectory(String dirName) {
         Path scriptsDir = FabricLoader.getInstance()
