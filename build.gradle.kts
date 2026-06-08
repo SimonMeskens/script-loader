@@ -72,6 +72,9 @@ dependencies {
 	// Groovy runtime for the scripts
 	include(implementation("org.apache.groovy:groovy:5.0.6")!!)
 
+	// Mapping-io for the remapping
+	include(implementation("net.fabricmc:mapping-io:0.8.0")!!)
+
 	// StAPI itself.
 	// transitiveImplementation tells babric loom that you want this dependency to be pulled into other mod's development workspaces. Best used ONLY for required dependencies.
 	modImplementation("net.modificationstation:StationAPI:${project.properties["stationapi_version"]}")

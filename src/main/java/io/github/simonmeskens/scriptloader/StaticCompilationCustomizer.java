@@ -9,7 +9,7 @@ import org.codehaus.groovy.control.customizers.CompilationCustomizer;
 
 public class StaticCompilationCustomizer  extends CompilationCustomizer {
     public StaticCompilationCustomizer() {
-        super(CompilePhase.SEMANTIC_ANALYSIS);
+        super(CompilePhase.CONVERSION);
     }
 
     @Override

@@ -1,0 +1,4 @@
+tiny	2	0	named	intermediary
+c	net/minecraft/item/Item2	net/minecraft/item/Item
+	f	Lnet/minecraft/item/Item2;	IRON_PICKAXE2	IRON_PICKAXE
+	m	()I	getMaxCount2	getMaxCount

@@ -2,7 +2,14 @@ package io.github.simonmeskens.scriptloader;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import io.github.simonmeskens.scriptloader.remap.MappingTreeRemapper;
+import io.github.simonmeskens.scriptloader.remap.Remapper;
+import io.github.simonmeskens.scriptloader.remap.RemappingClassLoader;
+import io.github.simonmeskens.scriptloader.remap.RemappingCompilationCustomizer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.mappingio.MappingReader;
+import net.fabricmc.mappingio.tree.MemoryMappingTree;
+import net.fabricmc.mappingio.tree.VisitableMappingTree;
 import net.modificationstation.stationapi.api.util.Namespace;
 import org.apache.logging.log4j.Logger;
 import org.codehaus.groovy.control.CompilerConfiguration;
@@ -17,31 +24,39 @@ public class GroovyScriptLoader {
     @SuppressWarnings("UnstableApiUsage")
     public static final Logger logger = Namespace.resolve().getLogger("GroovyLoader");
 
+    public static final Path scriptsDir;
+
     public static final Binding binding;
     public static final GroovyShell shell;
 
     static {
-        CompilerConfiguration config = new CompilerConfiguration();
-        config.addCompilationCustomizers(
-                new StaticCompilationCustomizer(),
-                new RemappingCompilationCustomizer()
-        );
+        try {
+            scriptsDir = FabricLoader.getInstance().getGameDir().resolve("scripts");
 
-        ClassLoader loader = GroovyScriptLoader.class.getClassLoader();
+            VisitableMappingTree mappings = new MemoryMappingTree();
 
-        binding = new Binding();
-        shell = new GroovyShell(loader, binding, config);
+            MappingReader.read(scriptsDir.resolve("mappings.tiny"), null, mappings);
+
+            Remapper remapper = new MappingTreeRemapper(mappings, "named", "intermediary");
+
+            CompilerConfiguration config = new CompilerConfiguration();
+            config.addCompilationCustomizers(new RemappingCompilationCustomizer(remapper));
+
+            ClassLoader loader = new RemappingClassLoader(GroovyScriptLoader.class.getClassLoader(), remapper);
+
+            binding = new Binding();
+            shell = new GroovyShell(loader, binding, config);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void runDirectory(String dirName) {
-        Path scriptsDir = FabricLoader.getInstance()
-                .getGameDir()
-                .resolve("scripts")
-                .resolve(dirName);
+        Path dir = scriptsDir.resolve(dirName);
 
-        if (!Files.exists(scriptsDir) || !scriptsDir.toFile().isDirectory()) {
+        if (!Files.exists(dir) || !dir.toFile().isDirectory()) {
             try {
-                Files.createDirectories(scriptsDir);
+                Files.createDirectories(dir);
             } catch (IOException e) {
                 logger.error("could not create /scripts/{} directory.", dirName, e);
                 return;
@@ -49,7 +64,7 @@ public class GroovyScriptLoader {
         }
 
         List<Path> scripts;
-        try (Stream<Path> files = Files.walk(scriptsDir)) {
+        try (Stream<Path> files = Files.walk(dir)) {
             scripts = files.filter(p -> p.toString().endsWith(".groovy")).toList();
         } catch (IOException e) {
             logger.error("could not scan /scripts/{} directory.", dirName, e);
@@ -63,6 +78,7 @@ public class GroovyScriptLoader {
 
         for (Path script : scripts) {
             try {
+                logger.info("Evaluating {}", script.getFileName());
                 shell.evaluate(script.toFile());
             } catch (IOException e) {
                 logger.error("error in {}: {}", script.getFileName(), e.getMessage());
