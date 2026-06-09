@@ -2,10 +2,8 @@ package io.github.simonmeskens.scriptloader;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
-import io.github.simonmeskens.scriptloader.remap.MappingTreeRemapper;
-import io.github.simonmeskens.scriptloader.remap.Remapper;
-import io.github.simonmeskens.scriptloader.remap.RemappingClassLoader;
-import io.github.simonmeskens.scriptloader.remap.RemappingCompilationCustomizer;
+import groovy.lang.GroovySystem;
+import io.github.simonmeskens.scriptloader.remap.*;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.mappingio.MappingReader;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
@@ -43,6 +41,8 @@ public class GroovyScriptLoader {
             config.addCompilationCustomizers(new RemappingCompilationCustomizer(remapper));
 
             ClassLoader loader = new RemappingClassLoader(GroovyScriptLoader.class.getClassLoader(), remapper);
+
+            GroovySystem.getMetaClassRegistry().setMetaClassCreationHandle(new RemappingMetaClassCreationHandle(remapper));
 
             binding = new Binding();
             shell = new GroovyShell(loader, binding, config);

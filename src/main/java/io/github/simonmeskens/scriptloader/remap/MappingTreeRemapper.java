@@ -30,21 +30,27 @@ public class MappingTreeRemapper implements Remapper {
     }
 
     @Override
-    public String remapFieldName(String dstClassName, String fieldName) {
-        MappingTreeView.ClassMappingView classMapping = mappings.getClass(toMappingName(dstClassName), dstNSId);
-        if (classMapping == null) return fieldName;
-        MappingTreeView.FieldMappingView fieldMapping = classMapping.getField(fieldName, null, srcNSId);
-        if (fieldMapping == null) return fieldName;
-        return fieldMapping.getName(dstNSId);
+    public String remapFieldName(Class<?> clazz, String fieldName) {
+        for (; clazz != null; clazz = clazz.getSuperclass()) {
+            MappingTreeView.ClassMappingView classMapping = mappings.getClass(toMappingName(clazz.getName()), dstNSId);
+            if (classMapping == null) continue;
+            MappingTreeView.FieldMappingView fieldMapping = classMapping.getField(fieldName, null, srcNSId);
+            if (fieldMapping == null) continue;
+            return fieldMapping.getName(dstNSId);
+        }
+        return fieldName;
     }
 
     @Override
-    public String remapMethodName(String dstClassName, String methodName) {
-        MappingTreeView.ClassMappingView classMapping = mappings.getClass(toMappingName(dstClassName), dstNSId);
-        if (classMapping == null) return methodName;
-        MappingTreeView.MethodMappingView methodMapping = classMapping.getMethod(methodName, null, srcNSId);
-        if (methodMapping == null) return methodName;
-        return methodMapping.getName(dstNSId);
+    public String remapMethodName(Class<?> clazz, String methodName) {
+        for (; clazz != null; clazz = clazz.getSuperclass()) {
+            MappingTreeView.ClassMappingView classMapping = mappings.getClass(toMappingName(clazz.getName()), dstNSId);
+            if (classMapping == null) continue;
+            MappingTreeView.MethodMappingView methodMapping = classMapping.getMethod(methodName, null, srcNSId);
+            if (methodMapping == null) continue;
+            return methodMapping.getName(dstNSId);
+        }
+        return methodName;
     }
 
     private String toMappingName(String name) {

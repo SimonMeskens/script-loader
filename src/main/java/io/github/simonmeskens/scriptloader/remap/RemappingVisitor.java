@@ -25,7 +25,7 @@ public class RemappingVisitor extends ClassCodeExpressionTransformer {
 
         else if (expr instanceof PropertyExpression prop) {
             String fieldName = prop.getPropertyAsString();
-            String remapped = remapper.remapFieldName(prop.getObjectExpression().getType().getName(), fieldName);
+            String remapped = remapper.remapFieldName(prop.getObjectExpression().getType().getTypeClass(), fieldName);
 
             if (!remapped.equals(fieldName)) {
                 PropertyExpression remappedExpr = new PropertyExpression(transform(prop.getObjectExpression()), remapped);
@@ -38,7 +38,7 @@ public class RemappingVisitor extends ClassCodeExpressionTransformer {
             String methodName = call.getMethodAsString();
 
             if (methodName != null) {
-                String remapped = remapper.remapMethodName(call.getObjectExpression().getType().getName(), methodName);
+                String remapped = remapper.remapMethodName(call.getObjectExpression().getType().getTypeClass(), methodName);
 
                 if (!remapped.equals(methodName)) {
                     MethodCallExpression remappedCall = new MethodCallExpression(
@@ -55,7 +55,7 @@ public class RemappingVisitor extends ClassCodeExpressionTransformer {
         }
 
         else if (expr instanceof StaticMethodCallExpression staticCall) {
-            String owner = staticCall.getOwnerType().getName();
+            Class<?> owner = staticCall.getOwnerType().getTypeClass();
             String remapped = remapper.remapMethodName(owner, staticCall.getMethod());
 
             if (!remapped.equals(staticCall.getMethod())) {
