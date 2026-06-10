@@ -17,16 +17,19 @@ public class InitListener {
 
     @EventListener(priority = ListenerPriority.HIGHEST)
     private static void serverInit(InitEvent event) {
+        GroovyScriptLoader.logger.info("Running /scripts/init");
         GroovyScriptLoader.runDirectory("init");
     }
 
     @EventListener(priority = ListenerPriority.LOWEST)
     private static void serverInitFinished(InitFinishedEvent event) {
+        GroovyScriptLoader.logger.info("Running /scripts/finished");
         GroovyScriptLoader.runDirectory("finished");
     }
 
     @EventListener(priority = ListenerPriority.LOWEST)
     public void registerRecipes(RecipeRegisterEvent event) {
+        GroovyScriptLoader.logger.info("Running /scripts/recipes");
         GroovyScriptLoader.runDirectory("recipes");
     }
 }

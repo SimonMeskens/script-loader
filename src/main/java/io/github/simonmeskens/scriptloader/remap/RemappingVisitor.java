@@ -1,5 +1,6 @@
 package io.github.simonmeskens.scriptloader.remap;
 
+import io.github.simonmeskens.scriptloader.GroovyScriptLoader;
 import lombok.Getter;
 import org.codehaus.groovy.ast.ClassCodeExpressionTransformer;
 import org.codehaus.groovy.ast.expr.Expression;
@@ -24,23 +25,30 @@ public class RemappingVisitor extends ClassCodeExpressionTransformer {
         if (expr == null) return null;
 
         else if (expr instanceof PropertyExpression prop) {
+            Class<?> object = prop.getObjectExpression().getType().getTypeClass();
             String fieldName = prop.getPropertyAsString();
-            String remapped = remapper.remapFieldName(prop.getObjectExpression().getType().getTypeClass(), fieldName);
 
-            if (!remapped.equals(fieldName)) {
-                PropertyExpression remappedExpr = new PropertyExpression(transform(prop.getObjectExpression()), remapped);
-                remappedExpr.setSourcePosition(expr);
-                return remappedExpr;
+            if (fieldName != null && !MappingUtil.hasField(object, fieldName)) {
+                GroovyScriptLoader.logger.info("Compile-time remapping field {} ({})", fieldName, object.getName());
+                String remapped = remapper.remapFieldName(object, fieldName);
+
+                if (remapped != null && !remapped.equals(fieldName)) {
+                    PropertyExpression remappedExpr = new PropertyExpression(transform(prop.getObjectExpression()), remapped);
+                    remappedExpr.setSourcePosition(expr);
+                    return remappedExpr;
+                }
             }
         }
 
         else if (expr instanceof MethodCallExpression call) {
+            Class<?> object = call.getObjectExpression().getType().getTypeClass();
             String methodName = call.getMethodAsString();
 
-            if (methodName != null) {
-                String remapped = remapper.remapMethodName(call.getObjectExpression().getType().getTypeClass(), methodName);
+            if (methodName != null && !MappingUtil.hasMethod(object, methodName)) {
+                GroovyScriptLoader.logger.info("Compile-time remapping method {} ({})", methodName, object.getName());
+                String remapped = remapper.remapMethodName(object, methodName);
 
-                if (!remapped.equals(methodName)) {
+                if (remapped != null && !remapped.equals(methodName)) {
                     MethodCallExpression remappedCall = new MethodCallExpression(
                             transform(call.getObjectExpression()),
                             remapped,
@@ -56,15 +64,20 @@ public class RemappingVisitor extends ClassCodeExpressionTransformer {
 
         else if (expr instanceof StaticMethodCallExpression staticCall) {
             Class<?> owner = staticCall.getOwnerType().getTypeClass();
-            String remapped = remapper.remapMethodName(owner, staticCall.getMethod());
+            String methodName = staticCall.getMethod();
 
-            if (!remapped.equals(staticCall.getMethod())) {
-                StaticMethodCallExpression remappedCall = new StaticMethodCallExpression(
-                        staticCall.getOwnerType(),
-                        remapped,
-                        transform(staticCall.getArguments()));
-                remappedCall.setSourcePosition(expr);
-                return remappedCall;
+            if (methodName != null && !MappingUtil.hasMethod(owner, methodName)) {
+                GroovyScriptLoader.logger.info("Compile-time remapping static method {} ({})", methodName, owner.getName());
+                String remapped = remapper.remapMethodName(owner, methodName);
+
+                if (remapped != null && !remapped.equals(staticCall.getMethod())) {
+                    StaticMethodCallExpression remappedCall = new StaticMethodCallExpression(
+                            staticCall.getOwnerType(),
+                            remapped,
+                            transform(staticCall.getArguments()));
+                    remappedCall.setSourcePosition(expr);
+                    return remappedCall;
+                }
             }
         }
 

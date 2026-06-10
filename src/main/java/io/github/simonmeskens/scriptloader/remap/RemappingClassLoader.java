@@ -1,6 +1,7 @@
 package io.github.simonmeskens.scriptloader.remap;
 
 import groovy.lang.GroovyClassLoader;
+import io.github.simonmeskens.scriptloader.GroovyScriptLoader;
 import lombok.Getter;
 import org.codehaus.groovy.control.CompilationFailedException;
 

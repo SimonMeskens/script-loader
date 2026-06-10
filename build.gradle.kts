@@ -1,9 +1,12 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import net.fabricmc.loom.task.RemapJarTask
 import java.net.URI
 
 plugins {
 	id("maven-publish")
 	id("fabric-loom") version "1.15.3"
 	id("babric-loom-extension") version "1.15.3"
+	id("com.gradleup.shadow") version "9.4.2"
 }
 
 //noinspection GroovyUnusedAssignment
@@ -50,6 +53,8 @@ repositories {
 	}
 }
 
+val embed by configurations.creating
+
 dependencies {
 	minecraft("com.mojang:minecraft:b1.7.3")
 	mappings("net.glasslauncher:biny:${project.properties["yarn_mappings"]}:v2")
@@ -70,10 +75,10 @@ dependencies {
 	implementation("com.google.guava:guava:33.2.1-jre")
 
 	// Groovy runtime for the scripts
-	include(implementation("org.apache.groovy:groovy:5.0.6")!!)
+	embed("org.apache.groovy:groovy:5.0.6")
 
 	// Mapping-io for the remapping
-	include(implementation("net.fabricmc:mapping-io:0.8.0")!!)
+	embed("net.fabricmc:mapping-io:0.8.0")
 
 	// StAPI itself.
 	// transitiveImplementation tells babric loom that you want this dependency to be pulled into other mod's development workspaces. Best used ONLY for required dependencies.
@@ -90,6 +95,10 @@ dependencies {
 
 configurations.all {
 	exclude("babric")
+}
+
+configurations.implementation {
+	extendsFrom(embed)
 }
 
 tasks.withType<ProcessResources> {
@@ -114,10 +123,27 @@ java {
 	withSourcesJar()
 }
 
-tasks.withType<Jar> {
+tasks.named("jar") {
+	enabled = false
+}
+
+tasks.withType<ShadowJar>() {
 	from("LICENSE") {
 		rename { "${it}_${project.properties["archivesBaseName"]}" }
 	}
+
+	archiveClassifier.set("dev")
+	configurations = listOf(embed)
+
+	destinationDirectory.set(tasks.named<Jar>("jar").flatMap { it.destinationDirectory })
+
+	mergeServiceFiles()
+	mergeGroovyExtensionModules()
+}
+
+tasks.withType<RemapJarTask>() {
+	dependsOn(tasks.shadowJar)
+	inputFile.set(tasks.shadowJar.get().archiveFile)
 }
 
 // Tells gradle to not generate module files for maven.

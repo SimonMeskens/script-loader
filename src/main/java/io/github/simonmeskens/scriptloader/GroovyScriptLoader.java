@@ -42,7 +42,7 @@ public class GroovyScriptLoader {
 
             ClassLoader loader = new RemappingClassLoader(GroovyScriptLoader.class.getClassLoader(), remapper);
 
-            GroovySystem.getMetaClassRegistry().setMetaClassCreationHandle(new RemappingMetaClassCreationHandle(remapper));
+            //GroovySystem.getMetaClassRegistry().setMetaClassCreationHandle(new RemappingMetaClassCreationHandle(remapper));
 
             binding = new Binding();
             shell = new GroovyShell(loader, binding, config);
